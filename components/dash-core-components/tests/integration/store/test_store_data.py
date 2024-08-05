@@ -162,3 +162,39 @@ def test_stda003_large_data_size(storage_type, csv_5mb, dash_dcc):
     dash_dcc.wait_for_text_to_equal("#out", fingerprint(csv_5mb))
 
     assert dash_dcc.get_logs() == []
+
+
+def test_stda004_prevent_initial_call(dash_dcc):
+    app = Dash(__name__)
+
+    app.layout = html.Div([
+        dcc.Store(id='store-none', data=None),
+        dcc.Store(id='store', data={}),
+        html.H3("none store"),
+        html.Div(id='output-none-store', children="Not called yet"),
+        html.H3("store"),
+        html.Div(id='output-store', children="Not called yet"),
+    ])
+
+    @app.callback(
+        Output('output-none-store', 'children'),
+        Input('store-none', 'data'),
+        prevent_initial_call=True
+    )
+    def on_store_none(store_none):
+        return "called"
+
+    @app.callback(
+        Output('output-store', 'children'),
+        Input("store", "data"),
+        prevent_initial_call=True
+    )
+    def on_store(store):
+        return "called"
+
+    dash_dcc.start_server(app)
+
+    assert dash_dcc.find_element("#output-store").text == "Not called yet"
+    assert dash_dcc.find_element("#output-none-store").text == "Not called yet"
+
+    assert dash_dcc.get_logs() == []
