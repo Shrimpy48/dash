@@ -164,12 +164,13 @@ def test_stda003_large_data_size(storage_type, csv_5mb, dash_dcc):
     assert dash_dcc.get_logs() == []
 
 
-def test_stda004_prevent_initial_call(dash_dcc):
+@pytest.mark.parametrize("storage_type", ("memory", "local", "session"))
+def test_stda004_prevent_initial_call(storage_type, dash_dcc):
     app = Dash(__name__)
 
     app.layout = html.Div([
-        dcc.Store(id='store-none', data=None),
-        dcc.Store(id='store', data={}),
+        dcc.Store(id='store-none', data=None, storage_type=storage_type),
+        dcc.Store(id='store', data={}, storage_type=storage_type),
         html.H3("none store"),
         html.Div(id='output-none-store', children="Not called yet"),
         html.H3("store"),
